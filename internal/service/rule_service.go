@@ -281,6 +281,7 @@ func (s *Service) UnbindRuleFont(id, fontID string) (*RuleDetail, error) {
 }
 
 // ReorderRules 重排规则优先级（checksum 冲突检测）。
+// 重排是一次配置变更：返回的规则集版本严格高于重排前的版本（单调递增）。
 func (s *Service) ReorderRules(newOrder []string, expectChecksum string) (*RuleSetState, error) {
 	rules, _ := s.st.ListRules()
 	ruleFontsAll, _ := s.allRuleFonts()
@@ -289,7 +290,9 @@ func (s *Service) ReorderRules(newOrder []string, expectChecksum string) (*RuleS
 		return nil, err
 	}
 	for _, r := range res.Rules {
-		if err := s.st.UpdateRuleStatus(r.ID, r.Status, r.Version+1); err != nil {
+		// res.Rules[i].Version 已被 ApplyReorder 提升为新规则集版本（oldMax+1），
+		// 直接写回；不要再 +1，否则返回版本与持久化版本不一致。
+		if err := s.st.UpdateRuleStatus(r.ID, r.Status, r.Version); err != nil {
 			return nil, err
 		}
 		// 写回 priority

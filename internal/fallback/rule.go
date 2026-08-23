@@ -184,14 +184,25 @@ func ApplyReorder(rules []model.FallbackRule, fontsByRule map[string][]string, n
 		seen[ruleID] = true
 		r.Priority = i + 1
 	}
+	// 当前规则集版本 = 各规则 version 的最大值；重排是一次配置变更，
+	// 版本须单调递增：把新版本号定为当前最大值 +1，使所有规则对齐到该值，
+	// 并随结果返回，以反映这次重排产生的新配置。
+	nextVersion := 1
+	for _, r := range rules {
+		if r.Version >= nextVersion {
+			nextVersion = r.Version + 1
+		}
+	}
 	newRules := make([]model.FallbackRule, 0, len(rules))
 	for _, ruleID := range newOrder {
-		newRules = append(newRules, *byID[ruleID])
+		r := byID[ruleID]
+		r.Version = nextVersion
+		newRules = append(newRules, *r)
 	}
 	return &ReorderResult{
 		Rules:    newRules,
 		Checksum: Checksum(newRules, fontsByRule),
-		Version:  0,
+		Version:  nextVersion,
 	}, nil
 }
 

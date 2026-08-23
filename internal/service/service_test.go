@@ -128,6 +128,55 @@ func TestReorderChecksumConflict(t *testing.T) {
 	}
 }
 
+// TestReorderVersionMonotonic 验证重排后返回的规则集版本单调递增，
+// 且与持久化的规则集版本（CurrentRuleVersion）一致，能反映一次新的配置变更。
+func TestReorderVersionMonotonic(t *testing.T) {
+	svc := newTestService(t)
+	seedFontsRules(t, svc)
+
+	// 重排前的规则集版本（各规则 version 的最大值）
+	prev, err := svc.st.CurrentRuleVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 用最新 checksum 重排一次
+	st, err := svc.RuleSetChecksum()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rules, _ := svc.ListRules()
+	newOrder := []string{rules[1].Rule.ID, rules[0].Rule.ID}
+	res, err := svc.ReorderRules(newOrder, st.Checksum)
+	if err != nil {
+		t.Fatalf("reorder should succeed: %v", err)
+	}
+
+	// 返回的版本必须严格大于重排前的版本（单调递增，反映新配置）
+	if res.Version <= prev {
+		t.Fatalf("returned version %d must be greater than pre-reorder version %d", res.Version, prev)
+	}
+	// 返回版本必须与持久化的规则集版本一致（而非退回初始值）
+	currentDB, err := svc.st.CurrentRuleVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Version != currentDB {
+		t.Fatalf("returned version %d != persisted rule set version %d", res.Version, currentDB)
+	}
+
+	// 再次重排，版本应继续单调递增
+	st2, _ := svc.RuleSetChecksum()
+	rules2, _ := svc.ListRules()
+	res2, err := svc.ReorderRules([]string{rules2[0].Rule.ID, rules2[1].Rule.ID}, st2.Checksum)
+	if err != nil {
+		t.Fatalf("second reorder should succeed: %v", err)
+	}
+	if res2.Version <= res.Version {
+		t.Fatalf("second reorder version %d must be greater than first %d", res2.Version, res.Version)
+	}
+}
+
 func TestFullPipelineAndVersionFreeze(t *testing.T) {
 	svc := newTestService(t)
 	seedFontsRules(t, svc)

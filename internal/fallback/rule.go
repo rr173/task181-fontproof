@@ -191,7 +191,7 @@ func ApplyReorder(rules []model.FallbackRule, fontsByRule map[string][]string, n
 	return &ReorderResult{
 		Rules:    newRules,
 		Checksum: Checksum(newRules, fontsByRule),
-		Version:  0,
+		Version:  model.NextRuleSetVersion(rules),
 	}, nil
 }
 

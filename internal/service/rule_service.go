@@ -307,7 +307,7 @@ func (s *Service) RuleSetChecksum() (*RuleSetState, error) {
 	ruleFontsAll, _ := s.allRuleFonts()
 	return &RuleSetState{
 		Checksum: fallback.Checksum(rules, ruleFontsAll),
-		Version:  len(rules),
+		Version:  model.NextRuleSetVersion(rules) - 1,
 	}, nil
 }
 

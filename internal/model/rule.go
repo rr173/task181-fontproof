@@ -5,11 +5,11 @@ import "time"
 // 覆盖规则状态机：draft → verifiable / gapped → published → superseded。
 // 已发布（published）规则不可直接编辑，只能 supersede 生成新规则。
 const (
-	RuleDraft       = "draft"
-	RuleVerifiable  = "verifiable"
-	RuleGapped      = "gapped"
-	RulePublished   = "published"
-	RuleSuperseded  = "superseded"
+	RuleDraft      = "draft"
+	RuleVerifiable = "verifiable"
+	RuleGapped     = "gapped"
+	RulePublished  = "published"
+	RuleSuperseded = "superseded"
 )
 
 // FallbackRule 是一条字体回退规则：声明必需脚本与按优先级排序的字体集合。
@@ -25,6 +25,16 @@ type FallbackRule struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 	SupersededBy    string    `json:"superseded_by,omitempty"`
 	Supersedes      string    `json:"supersedes,omitempty"`
+}
+
+// FallbackRuleBefore defines the canonical deterministic order for rules.
+// Priority is the primary key; ID is the immutable tie-breaker so renaming a
+// rule cannot silently change which rule wins at the same priority.
+func FallbackRuleBefore(a, b FallbackRule) bool {
+	if a.Priority != b.Priority {
+		return a.Priority < b.Priority
+	}
+	return a.ID < b.ID
 }
 
 // RuleFont 是规则与字体的绑定（rank 决定回退顺序，越小越优先）。

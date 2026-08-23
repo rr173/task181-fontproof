@@ -31,15 +31,12 @@ type ValidatedRule struct {
 	Covered bool     // 必需脚本是否全部有字体覆盖
 }
 
-// ResolveOrder 返回按 priority 升序、同优先级按名称排序的规则 id 列表。
+// ResolveOrder 返回按 priority 升序、同优先级按稳定 ID 排序的规则 id 列表。
 func ResolveOrder(rules []model.FallbackRule) []string {
 	sorted := make([]model.FallbackRule, len(rules))
 	copy(sorted, rules)
 	sort.SliceStable(sorted, func(i, j int) bool {
-		if sorted[i].Priority == sorted[j].Priority {
-			return sorted[i].Name > sorted[j].Name
-		}
-		return sorted[i].Priority < sorted[j].Priority
+		return model.FallbackRuleBefore(sorted[i], sorted[j])
 	})
 	out := make([]string, len(sorted))
 	for i, r := range sorted {

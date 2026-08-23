@@ -1,6 +1,7 @@
 package service
 
 import (
+	"sort"
 	"time"
 
 	"task181-fontproof/internal/fallback"
@@ -321,6 +322,9 @@ func (s *Service) ListRules() ([]RuleDetail, error) {
 			out = append(out, *d)
 		}
 	}
+	sort.SliceStable(out, func(i, j int) bool {
+		return model.FallbackRuleBefore(out[i].Rule, out[j].Rule)
+	})
 	return out, nil
 }
 

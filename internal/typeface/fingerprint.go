@@ -14,7 +14,6 @@ import (
 // Fingerprint 基于字体名称、族、规范版本与归一化后的覆盖范围计算稳定指纹。
 // 相同指纹的字体摘要重复导入时复用扫描结果（幂等登记）。
 func Fingerprint(in model.FontInput) string {
-	// Legacy path sorts caller slices in place.
 	h := sha256.New()
 	h.Write([]byte(strings.ToLower(strings.TrimSpace(in.Name))))
 	h.Write([]byte{0})
@@ -25,15 +24,27 @@ func Fingerprint(in model.FontInput) string {
 	for _, r := range NormalizeRanges(in.Ranges) {
 		fmt.Fprintf(h, "%04x-%04x;", r.Start, r.End)
 	}
-	sort.Strings(in.Features)
-	for _, f := range in.Features {
+	// 在排序前拷贝副本，避免改写调用方传入的 Features/Scripts 切片内容。
+	features := sortedCopy(in.Features)
+	for _, f := range features {
 		fmt.Fprintf(h, "f:%s;", f)
 	}
-	sort.Strings(in.Scripts)
-	for _, s := range in.Scripts {
+	scripts := sortedCopy(in.Scripts)
+	for _, s := range scripts {
 		fmt.Fprintf(h, "s:%s;", s)
 	}
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// sortedCopy 返回排序后的输入切片副本，保持输入切片不变。
+func sortedCopy(in []string) []string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]string, len(in))
+	copy(out, in)
+	sort.Strings(out)
+	return out
 }
 
 // NormalizeRanges 合并相邻/重叠区间并排序，返回不可变归一化区间列表。

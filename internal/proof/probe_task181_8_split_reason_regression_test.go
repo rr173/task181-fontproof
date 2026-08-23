@@ -1,0 +1,3 @@
+package proof_test
+import ("strings"; "testing"; "task181-fontproof/internal/grapheme"; "task181-fontproof/internal/model"; "task181-fontproof/internal/proof"; "task181-fontproof/internal/typeface")
+func TestBug08_CombiningSplitReason(t *testing.T){ view:=typeface.NewCoverageView([]model.Font{{ID:"base",Name:"base"},{ID:"mark",Name:"mark"}},[]model.FontRange{{FontID:"base",Start:'a',End:'a'},{FontID:"mark",Start:0x301,End:0x301}}); e:=proof.Engine{View:view,Order:[]string{"r"},FontsByRule:map[string][]string{"r":{"base","mark"}}}; got:=e.ProveCluster([]rune{'a','\u0301'},true,int(grapheme.KindCombining)); if got.Status!=model.ClusterRisk || !strings.Contains(got.Reason,"combining") { t.Fatalf("result=%+v",got) } }

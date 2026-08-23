@@ -1,12 +1,13 @@
-FROM docker.m.daocloud.io/library/golang:1.26.3-bookworm
+FROM docker.m.daocloud.io/library/golang:1.26.3-bookworm AS build
 
 WORKDIR /app
-
-# 先复制依赖文件并下载依赖，利用 Docker 缓存并保证容器内可用
+ENV GOPROXY=https://goproxy.cn,direct GOSUMDB=sum.golang.google.cn GOTOOLCHAIN=local
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
-RUN go build ./...
+RUN CGO_ENABLED=0 go build -o /fontproof ./cmd/fontproof
 
-CMD ["bash"]
+FROM docker.m.daocloud.io/library/alpine:3.20
+COPY --from=build /fontproof /fontproof
+ENTRYPOINT ["/fontproof"]
+CMD ["--smoke-test"]

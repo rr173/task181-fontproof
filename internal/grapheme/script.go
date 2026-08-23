@@ -2,7 +2,7 @@ package grapheme
 
 import "unicode"
 
-// DetectScript 推断一个码点序列的主要 Unicode 脚本。
+// DetectScript 推断一个码点序列的主要 Unicode 脚本；数字系统标签用于分段边界。
 // 按“第一个非公共脚本字符”优先；组合标记与变体选择符继承前一个字符的脚本。
 func DetectScript(seq []rune) string {
 	inherited := ""

@@ -74,7 +74,7 @@ func Segmenter(text string) []Cluster {
 		}
 		// 数字序列归组：仅当以数字开头且尚未并入组合内容时
 		if kind == KindSimple && isDigit(cp) {
-			for i+1 < len(runes) && isDigit(runes[i+1]) {
+			for i+1 < len(runes) && isDigit(runes[i+1]) && sameNumericScript(cp, runes[i+1]) {
 				i++
 			}
 			if i > start {
@@ -96,6 +96,11 @@ func Segmenter(text string) []Cluster {
 		i++
 	}
 	return clusters
+}
+
+func sameNumericScript(a, b rune) bool {
+	sa, _ := scriptOf(a); sb, _ := scriptOf(b)
+	return sa == sb
 }
 
 // isCombiningMark 判断是否为组合标记（Mn/Me/Mc）。

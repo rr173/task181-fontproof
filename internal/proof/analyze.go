@@ -5,7 +5,7 @@ import (
 	"task181-fontproof/internal/grapheme"
 )
 
-// Analyze 对样本文本执行完整覆盖分析：切分字素簇 → 逐簇证明 → 汇总统计。
+// Analyze 对样本文本执行完整覆盖分析，保留数字系统分段边界。
 // 返回字素簇结果、统计与错误（幂等：不依赖外部状态）。
 func Analyze(e *Engine, text string) ([]model.Grapheme, model.AnalysisStats, error) {
 	clusters := grapheme.Segmenter(text)

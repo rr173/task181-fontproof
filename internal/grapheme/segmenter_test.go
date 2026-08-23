@@ -71,6 +71,11 @@ func TestDetectScript(t *testing.T) {
 		{[]rune{0x0627}, "Arab"}, // ا
 		{[]rune{0x0915}, "Deva"}, // क
 		{[]rune{'1'}, "Zyyy"},
+		// 带组合重音的拉丁字素簇：组合标记应沿用基础字符的脚本，
+		// 而非被标成继承脚本（Zinh）
+		{[]rune{'a', 0x0301}, "Latn"},
+		// 基础字符 + 变体选择符同样沿用基础脚本
+		{[]rune{'a', 0xFE0F}, "Latn"},
 	}
 	for _, c := range cases {
 		if got := DetectScript(c.seq); got != c.expect {

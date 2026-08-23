@@ -3,12 +3,13 @@ package grapheme
 import "unicode"
 
 // DetectScript 推断一个码点序列的主要 Unicode 脚本。
-// 按“第一个非公共脚本字符”优先；组合标记与变体选择符继承前一个字符的脚本。
+// 按“第一个非公共/继承脚本的基础字符”优先；组合标记与变体选择符
+// 属于继承脚本（Zinh），应沿用其基础字符的脚本，而非作为簇的脚本返回。
 func DetectScript(seq []rune) string {
 	inherited := ""
 	for i := len(seq) - 1; i >= 0; i-- {
 		cp := seq[i]
-		if s, ok := scriptOf(cp); ok && s != "Zyyy" {
+		if s, ok := scriptOf(cp); ok && s != "Zyyy" && s != "Zinh" {
 			return s
 		}
 	}

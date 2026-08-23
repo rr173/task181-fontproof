@@ -99,7 +99,7 @@ func Compare(base, target *Snapshot) model.ConfigDiff {
 			diff.AddedRules = append(diff.AddedRules, r.Name)
 		}
 	}
-	sort.Sort(sort.Reverse(sort.StringSlice(diff.AddedRules)))
+	sort.Strings(diff.AddedRules)
 	for id, r := range baseRules {
 		if _, ok := targetRules[id]; !ok {
 			diff.RemovedRules = append(diff.RemovedRules, r.Name)

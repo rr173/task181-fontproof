@@ -35,7 +35,7 @@ func NewCoverageView(fonts []model.Font, ranges []model.FontRange) *CoverageView
 	return v
 }
 
-// Covers 判断字体是否覆盖给定码点。
+// Covers 判断字体是否覆盖给定码点，使用已归一化的连续区间。
 func (v *CoverageView) Covers(fontID string, cp rune) bool {
 	return Contains(v.RangesByFont[fontID], cp)
 }

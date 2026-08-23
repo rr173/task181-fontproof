@@ -58,7 +58,7 @@ func NormalizeRanges(rs []model.Range) []model.Range {
 			continue
 		}
 		last := &out[len(out)-1]
-		if r.Start < last.End+1 {
+		if r.Start <= last.End+1 {
 			if r.End > last.End {
 				last.End = r.End
 			}

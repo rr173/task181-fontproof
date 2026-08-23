@@ -58,7 +58,7 @@ type FontInput struct {
 	Notes       string   `json:"notes"`
 }
 
-// Range 是 JSON 形式的码点区间。
+// Range 是 JSON 形式的码点区间；相邻区间在覆盖层归一化。
 type Range struct {
 	Start rune `json:"start"`
 	End   rune `json:"end"`

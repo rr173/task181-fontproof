@@ -126,3 +126,27 @@ func TestResolveOrder(t *testing.T) {
 		t.Fatalf("unexpected order: %v", order)
 	}
 }
+
+// TestResolveOrderStableAcrossInputOrder 验证两条优先级相同、名称相同的回退规则
+// 在不同输入顺序下得到同一选择顺序（按 ID 兜底），结果稳定可重复。
+func TestResolveOrderStableAcrossInputOrder(t *testing.T) {
+	ruleA := model.FallbackRule{ID: "rule-a", Name: "dup", Priority: 3}
+	ruleB := model.FallbackRule{ID: "rule-b", Name: "dup", Priority: 3}
+	ab := []model.FallbackRule{ruleA, ruleB}
+	ba := []model.FallbackRule{ruleB, ruleA}
+	orderAB := ResolveOrder(ab)
+	orderBA := ResolveOrder(ba)
+	if orderAB[0] != "rule-a" || orderAB[1] != "rule-b" {
+		t.Fatalf("expected [rule-a rule-b], got %v", orderAB)
+	}
+	// 不同输入顺序必须得到相同的稳定顺序
+	if orderAB[0] != orderBA[0] || orderAB[1] != orderBA[1] {
+		t.Fatalf("order must be independent of input order: AB=%v BA=%v", orderAB, orderBA)
+	}
+	// checksum 同样必须与输入顺序无关
+	fonts := map[string][]string{"rule-a": {"f1"}, "rule-b": {"f2"}}
+	if Checksum(ab, fonts) != Checksum(ba, fonts) {
+		t.Fatal("checksum must be independent of input order for same-named rules")
+	}
+}
+

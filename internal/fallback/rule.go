@@ -32,14 +32,21 @@ type ValidatedRule struct {
 }
 
 // ResolveOrder 返回按 priority 升序、同优先级按名称排序的规则 id 列表。
+// 同优先级下依次以 Name、ID 为确定性 tiebreaker，避免两条优先级与名称均相同
+// 的规则因输入顺序不同而得到不同的选择顺序，保证结果可重复。
 func ResolveOrder(rules []model.FallbackRule) []string {
 	sorted := make([]model.FallbackRule, len(rules))
 	copy(sorted, rules)
 	sort.SliceStable(sorted, func(i, j int) bool {
-		if sorted[i].Priority == sorted[j].Priority {
-			return sorted[i].Name > sorted[j].Name
+		if sorted[i].Priority != sorted[j].Priority {
+			return sorted[i].Priority < sorted[j].Priority
 		}
-		return sorted[i].Priority < sorted[j].Priority
+		if sorted[i].Name != sorted[j].Name {
+			return sorted[i].Name < sorted[j].Name
+		}
+		// 名称相同（含两条同名同优先级规则）时，按 ID 兜底：ID 唯一确定顺序，
+		// 排序结果不再依赖输入顺序。
+		return sorted[i].ID < sorted[j].ID
 	})
 	out := make([]string, len(sorted))
 	for i, r := range sorted {

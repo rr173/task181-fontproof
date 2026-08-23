@@ -127,12 +127,14 @@ func (s *Service) ResolveAnalysis(analysisID string) (*model.Analysis, error) {
 		cl := clusters[idx]
 		res := engine.ProveCluster(cl.Codepoints, cl.IsComposite, int(cl.Kind))
 		g := model.Grapheme{
-			ID:          newID("grp"),
-			AnalysisID:  analysisID,
-			Position:    idx,
-			Text:        cl.Text,
-			Codepoints:  cl.Codepoints,
-			Script:      cl.Script,
+			ID:         newID("grp"),
+			AnalysisID: analysisID,
+			Position:   idx,
+			Text:       cl.Text,
+			Codepoints: cl.Codepoints,
+			// Recompute at the persistence boundary; this keeps stored analysis
+			// metadata correct if cluster construction evolves independently.
+			Script:      grapheme.DetectScript(cl.Codepoints),
 			Status:      res.Status,
 			Chain:       res.Chain,
 			RiskReason:  res.Reason,

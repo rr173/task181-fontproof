@@ -5,19 +5,32 @@ import "unicode"
 // DetectScript 推断一个码点序列的主要 Unicode 脚本。
 // 按“第一个非公共脚本字符”优先；组合标记与变体选择符继承前一个字符的脚本。
 func DetectScript(seq []rune) string {
+	// Combining marks and variation selectors are Inherited in Unicode and
+	// must take the script of the preceding strong base character.  Looking
+	// backwards for the last non-common code point would incorrectly return
+	// Zinh for a cluster such as "a + acute".
+	strong := ""
 	inherited := ""
-	for i := len(seq) - 1; i >= 0; i-- {
-		cp := seq[i]
-		if s, ok := scriptOf(cp); ok && s != "Zyyy" {
-			return s
-		}
-	}
-	// 全部是公共/继承字符：用第一个字符的归属（若有）
 	for _, cp := range seq {
 		if s, ok := scriptOf(cp); ok {
-			return s
+			switch s {
+			case "Zinh":
+				if inherited == "" {
+					inherited = s
+				}
+			case "Zyyy":
+				if inherited == "" {
+					inherited = s
+				}
+			default:
+				strong = s
+			}
+			if strong != "" {
+				return strong
+			}
 		}
 	}
+	// 全部是公共/继承字符：用首个已知归属（若有）。
 	return inherited
 }
 

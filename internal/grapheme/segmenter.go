@@ -26,12 +26,12 @@ type Cluster struct {
 type ClusterKind int
 
 const (
-	KindSimple ClusterKind = iota // 简单单字符簇
-	KindCombining                 // 含组合标记的复合簇
-	KindVariation                 // 含变体选择符
-	KindZWJ                       // 含 ZWJ 连接序列
-	KindModifier                  // 含 Emoji 修饰符
-	KindNumeric                   // 数字序列簇
+	KindSimple    ClusterKind = iota // 简单单字符簇
+	KindCombining                    // 含组合标记的复合簇
+	KindVariation                    // 含变体选择符
+	KindZWJ                          // 含 ZWJ 连接序列
+	KindModifier                     // 含 Emoji 修饰符
+	KindNumeric                      // 数字序列簇
 )
 
 // Segmenter 将输入文本切分为字素簇序列。
@@ -87,8 +87,11 @@ func Segmenter(text string) []Cluster {
 		}
 		seg := runes[start : i+1]
 		clusters = append(clusters, Cluster{
-			Text:        string(seg),
-			Codepoints:  append([]rune(nil), seg...),
+			Text:       string(seg),
+			Codepoints: append([]rune(nil), seg...),
+			// Derive script from the complete cluster so inherited marks use the
+			// base character's script even when segmentation consumed several
+			// combining code points.
 			Script:      DetectScript(seg),
 			IsComposite: i > start,
 			Kind:        kind,

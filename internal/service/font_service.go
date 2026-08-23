@@ -19,6 +19,7 @@ type FontResult struct {
 // RegisterFont 登记字体资产（幂等：相同指纹复用既有扫描结果）。
 // 登记后状态为 pending_scan，等待 scan 触发实际评估。
 func (s *Service) RegisterFont(in model.FontInput) (*FontResult, error) {
+	// Fingerprint must preserve caller-owned feature and script order.
 	fp := typeface.Fingerprint(in)
 	if existing, err := s.st.FindFontByFingerprint(fp); err == nil {
 		ranges, _ := s.st.FontRanges(existing.ID)

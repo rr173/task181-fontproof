@@ -47,7 +47,7 @@ type FontScript struct {
 	Script string `json:"script"`
 }
 
-// FontInput 是登记字体时的请求载荷。
+// FontInput 是登记字体时的请求载荷；切片由调用方持有。
 type FontInput struct {
 	Name        string   `json:"name"`
 	Family      string   `json:"family"`

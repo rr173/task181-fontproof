@@ -20,6 +20,26 @@ func DetectScript(seq []rune) string {
 	return inherited
 }
 
+// SplitReason returns the user-facing reason for a composite cluster being
+// covered by more than one font. Keep the mapping beside ClusterKind so the
+// proof layer cannot drift from the segmenter's enum values.
+func SplitReason(kind ClusterKind) string {
+	switch kind {
+	case KindCombining:
+		return "combining mark split from base character"
+	case KindVariation:
+		return "variation selector split from base character"
+	case KindZWJ:
+		return "ZWJ sequence split across fonts"
+	case KindModifier:
+		return "emoji modifier split from base emoji"
+	case KindNumeric:
+		return "numeric sequence split across fonts (style inconsistency risk)"
+	default:
+		return "composite grapheme split across fonts"
+	}
+}
+
 // scriptOf 返回单个码点的脚本标签；未识别返回 Zzzz。
 func scriptOf(r rune) (string, bool) {
 	if unicode.Is(unicode.S, r) && isEmojiLike(r) {

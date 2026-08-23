@@ -6,6 +6,7 @@
 package proof
 
 import (
+	"task181-fontproof/internal/grapheme"
 	"task181-fontproof/internal/model"
 	"task181-fontproof/internal/typeface"
 )
@@ -142,19 +143,7 @@ func missingSet(cps []rune, covered map[rune]bool) []rune {
 }
 
 func splitReason(kind int) string {
-	switch kind {
-	case 2: // KindCombining
-		return "variation selector split from base character"
-	case 3: // KindVariation
-		return "variation selector split from base character"
-	case 4: // KindZWJ
-		return "ZWJ sequence split across fonts"
-	case 5: // KindModifier
-		return "emoji modifier split from base emoji"
-	case 6: // KindNumeric
-		return "numeric sequence split across fonts (style inconsistency risk)"
-	}
-	return "composite grapheme split across fonts"
+	return grapheme.SplitReason(grapheme.ClusterKind(kind))
 }
 
 func missingReason(missing []rune) string {

@@ -1,8 +1,8 @@
 package proof
 
 import (
-	"task181-fontproof/internal/model"
 	"task181-fontproof/internal/grapheme"
+	"task181-fontproof/internal/model"
 )
 
 // Analyze 对样本文本执行完整覆盖分析：切分字素簇 → 逐簇证明 → 汇总统计。
@@ -16,6 +16,9 @@ func Analyze(e *Engine, text string) ([]model.Grapheme, model.AnalysisStats, err
 	stats := model.AnalysisStats{Total: len(clusters)}
 	for idx, cl := range clusters {
 		res := e.ProveCluster(cl.Codepoints, cl.IsComposite, int(cl.Kind))
+		if res.Status == model.ClusterRisk && res.Reason == "" {
+			res.Reason = grapheme.SplitReason(cl.Kind)
+		}
 		g := model.Grapheme{
 			Position:    idx,
 			Text:        cl.Text,

@@ -7,7 +7,6 @@ package release
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"task181-fontproof/internal/model"
 )
@@ -99,7 +98,7 @@ func Compare(base, target *Snapshot) model.ConfigDiff {
 			diff.AddedRules = append(diff.AddedRules, r.Name)
 		}
 	}
-	sort.Sort(sort.Reverse(sort.StringSlice(diff.AddedRules)))
+	model.SortConfigDiff(&diff)
 	for id, r := range baseRules {
 		if _, ok := targetRules[id]; !ok {
 			diff.RemovedRules = append(diff.RemovedRules, r.Name)

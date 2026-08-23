@@ -179,6 +179,7 @@ func (s *Service) CompareConfigs(baseID, targetID string) (*model.ConfigDiff, er
 		return nil, err
 	}
 	diff := release.Compare(baseSnap, targetSnap)
+	model.SortConfigDiff(&diff)
 	return &diff, nil
 }
 

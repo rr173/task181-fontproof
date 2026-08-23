@@ -58,7 +58,10 @@ func NormalizeRanges(rs []model.Range) []model.Range {
 			continue
 		}
 		last := &out[len(out)-1]
-		if r.Start < last.End+1 {
+		// 相邻（r.Start == last.End+1）与重叠（r.Start <= last.End）一并合并；
+		// 仅当 r.Start >= last.End+2（真正存在间隔）时才保留为独立区间。
+		// rune 为 int32，合法 Unicode 上限 0x10FFFF，last.End+1 不会溢出。
+		if r.Start <= last.End+1 {
 			if r.End > last.End {
 				last.End = r.End
 			}

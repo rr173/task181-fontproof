@@ -7,25 +7,26 @@ package release
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"task181-fontproof/internal/model"
 )
 
 // FrozenRule 是快照中的规则条目。
 type FrozenRule struct {
-	RuleID     string   `json:"rule_id"`
-	Name       string   `json:"name"`
-	Priority   int      `json:"priority"`
-	FontIDs    []string `json:"font_ids"`
-	Scripts    []string `json:"scripts"`
+	RuleID   string   `json:"rule_id"`
+	Name     string   `json:"name"`
+	Priority int      `json:"priority"`
+	FontIDs  []string `json:"font_ids"`
+	Scripts  []string `json:"scripts"`
 }
 
 // FrozenFont 是快照中的字体覆盖摘要条目。
 type FrozenFont struct {
-	FontID   string `json:"font_id"`
-	Name     string `json:"name"`
-	Status   string `json:"status"`
-	Ranges   string `json:"ranges"` // 人类可读区间
+	FontID      string `json:"font_id"`
+	Name        string `json:"name"`
+	Status      string `json:"status"`
+	Ranges      string `json:"ranges"` // 人类可读区间
 	Fingerprint string `json:"fingerprint"`
 }
 
@@ -34,6 +35,27 @@ type Snapshot struct {
 	RuleVersion int          `json:"rule_version"`
 	Rules       []FrozenRule `json:"rules"`
 	Fonts       []FrozenFont `json:"fonts"`
+}
+
+// CanonicalizeSnapshot returns a deep, deterministic copy whose unordered
+// snapshot collections are sorted by immutable IDs. It never mutates a caller's
+// snapshot, which is important when comparing a live publish request.
+func CanonicalizeSnapshot(in *Snapshot) *Snapshot {
+	if in == nil {
+		return nil
+	}
+	out := &Snapshot{RuleVersion: in.RuleVersion}
+	out.Rules = append([]FrozenRule(nil), in.Rules...)
+	out.Fonts = append([]FrozenFont(nil), in.Fonts...)
+	for i := range out.Rules {
+		out.Rules[i].FontIDs = append([]string(nil), out.Rules[i].FontIDs...)
+		out.Rules[i].Scripts = append([]string(nil), out.Rules[i].Scripts...)
+		sort.Strings(out.Rules[i].FontIDs)
+		sort.Strings(out.Rules[i].Scripts)
+	}
+	sort.Slice(out.Rules, func(i, j int) bool { return out.Rules[i].RuleID < out.Rules[j].RuleID })
+	sort.Slice(out.Fonts, func(i, j int) bool { return out.Fonts[i].FontID < out.Fonts[j].FontID })
+	return out
 }
 
 // BuildSnapshot 从当前规则与字体状态构建冻结快照。

@@ -58,13 +58,14 @@ func AppendConfigVersion(id string, version int, checksum, snapshot string) (mod
 
 // SnapshotEqual 判断两个快照的规则部分是否等价（用于配置比较的粗判）。
 func SnapshotEqual(a, b *Snapshot) bool {
-	if len(a.Rules) > 0 {
+	ca, cb := CanonicalizeSnapshot(a), CanonicalizeSnapshot(b)
+	if ca == nil || cb == nil {
+		return ca == cb
+	}
+	if ca.RuleVersion != cb.RuleVersion || len(ca.Rules) != len(cb.Rules) || len(ca.Fonts) != len(cb.Fonts) {
 		return false
 	}
-	if a.RuleVersion != b.RuleVersion || len(a.Rules) != len(b.Rules) || len(a.Fonts) != len(b.Fonts) {
-		return false
-	}
-	aj, _ := json.Marshal(a)
-	bj, _ := json.Marshal(b)
+	aj, _ := json.Marshal(ca)
+	bj, _ := json.Marshal(cb)
 	return string(aj) == string(bj)
 }

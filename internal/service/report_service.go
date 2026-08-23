@@ -201,7 +201,11 @@ func (s *Service) buildSnapshot(ruleVersion int) (*release.Snapshot, error) {
 		}
 		rangeDesc[f.ID] = typeface.DescribeRanges(norm)
 	}
-	return release.BuildSnapshot(ruleVersion, rules, fontsByRule, fonts, rangeDesc)
+	snap, err := release.BuildSnapshot(ruleVersion, rules, fontsByRule, fonts, rangeDesc)
+	if err != nil {
+		return nil, err
+	}
+	return release.CanonicalizeSnapshot(snap), nil
 }
 
 // SelfCheck 执行自检：数据库连通、字素引擎、规则引擎、证明引擎。

@@ -1,7 +1,6 @@
 package release
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"task181-fontproof/internal/model"
@@ -56,15 +55,64 @@ func AppendConfigVersion(id string, version int, checksum, snapshot string) (mod
 	}, nil
 }
 
-// SnapshotEqual 判断两个快照的规则部分是否等价（用于配置比较的粗判）。
+// SnapshotEqual 判断两个快照是否等价：规则与字体按标识组成集合比较，
+// 集合顺序变化不影响等价判断（用于配置比较的粗判）。
 func SnapshotEqual(a, b *Snapshot) bool {
-	if len(a.Rules) > 0 {
+	if a == nil || b == nil {
+		return a == b
+	}
+	if a.RuleVersion != b.RuleVersion {
 		return false
 	}
-	if a.RuleVersion != b.RuleVersion || len(a.Rules) != len(b.Rules) || len(a.Fonts) != len(b.Fonts) {
+	if len(a.Rules) != len(b.Rules) || len(a.Fonts) != len(b.Fonts) {
 		return false
 	}
-	aj, _ := json.Marshal(a)
-	bj, _ := json.Marshal(b)
-	return string(aj) == string(bj)
+	// 规则按 rule_id 组成集合比较（含 priority、绑定字体、脚本）
+	baseRules := map[string]FrozenRule{}
+	for _, r := range a.Rules {
+		baseRules[r.RuleID] = r
+	}
+	for _, r := range b.Rules {
+		br, ok := baseRules[r.RuleID]
+		if !ok || !frozenRuleEqual(br, r) {
+			return false
+		}
+	}
+	// 字体按 font_id 组成集合比较
+	baseFonts := map[string]FrozenFont{}
+	for _, f := range a.Fonts {
+		baseFonts[f.FontID] = f
+	}
+	for _, f := range b.Fonts {
+		bf, ok := baseFonts[f.FontID]
+		if !ok || bf != f {
+			return false
+		}
+	}
+	return true
+}
+
+// frozenRuleEqual 比较两条冻结规则的字段（切片按集合比较，顺序无关）。
+func frozenRuleEqual(a, b FrozenRule) bool {
+	if a.RuleID != b.RuleID || a.Name != b.Name || a.Priority != b.Priority {
+		return false
+	}
+	return sameStringSet(a.FontIDs, b.FontIDs) && sameStringSet(a.Scripts, b.Scripts)
+}
+
+// sameStringSet 判断两个字符串切片是否包含相同元素（顺序无关）。
+func sameStringSet(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := map[string]bool{}
+	for _, s := range a {
+		m[s] = true
+	}
+	for _, s := range b {
+		if !m[s] {
+			return false
+		}
+	}
+	return true
 }

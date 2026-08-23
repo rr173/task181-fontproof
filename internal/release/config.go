@@ -103,7 +103,10 @@ func Compare(base, target *Snapshot) model.ConfigDiff {
 			diff.RemovedRules = append(diff.RemovedRules, r.Name)
 		}
 	}
-	// 重排检测：同一规则集合下优先级顺序变化
+	// 重排检测：同一规则集合下优先级顺序变化。
+	// priorityOrder 对每个快照独立按 priority 升序、同优先级按 rule_id
+	// 稳定排序，因此「内容相同但 Rules 切片顺序不同」的两个快照会归一化为
+	// 完全相同的序列，不会误判为重排；只有真正发生优先级重排时才标记。
 	if len(diff.AddedRules) == 0 && len(diff.RemovedRules) == 0 {
 		baseOrder := priorityOrder(baseRules)
 		targetOrder := priorityOrder(targetRules)
@@ -139,16 +142,19 @@ func Compare(base, target *Snapshot) model.ConfigDiff {
 	return diff
 }
 
-// priorityOrder 按 priority 升序返回规则 id 序列。
+// priorityOrder 按 priority 升序、同优先级按 rule_id 升序返回规则 id 序列。
+// 二级排序键保证结果对 map 迭代顺序稳定，使「内容相同但切片顺序不同」的
+// 快照归一化为同一序列，不影响等价判断。
 func priorityOrder(rules map[string]FrozenRule) []string {
 	ids := make([]string, 0, len(rules))
 	for id := range rules {
 		ids = append(ids, id)
 	}
-	// 冒泡按 priority 排序（快照规模小）
+	// 冒泡按 priority 升序、同优先级按 rule_id 升序排序（快照规模小）
 	for i := 0; i < len(ids); i++ {
 		for j := i + 1; j < len(ids); j++ {
-			if rules[ids[j]].Priority < rules[ids[i]].Priority {
+			a, b := rules[ids[i]], rules[ids[j]]
+			if a.Priority > b.Priority || (a.Priority == b.Priority && ids[i] > ids[j]) {
 				ids[i], ids[j] = ids[j], ids[i]
 			}
 		}

@@ -5,11 +5,11 @@ import "time"
 // 覆盖规则状态机：draft → verifiable / gapped → published → superseded。
 // 已发布（published）规则不可直接编辑，只能 supersede 生成新规则。
 const (
-	RuleDraft       = "draft"
-	RuleVerifiable  = "verifiable"
-	RuleGapped      = "gapped"
-	RulePublished   = "published"
-	RuleSuperseded  = "superseded"
+	RuleDraft      = "draft"
+	RuleVerifiable = "verifiable"
+	RuleGapped     = "gapped"
+	RulePublished  = "published"
+	RuleSuperseded = "superseded"
 )
 
 // FallbackRule 是一条字体回退规则：声明必需脚本与按优先级排序的字体集合。
@@ -46,4 +46,17 @@ type RuleInput struct {
 type RuleSetChecksum struct {
 	Rules []string `json:"rules"` // "priority|ruleID|fontIDs"
 	Hash  string   `json:"hash"`
+}
+
+// MergeRuleFontChains converts per-rule ordered chains into the directed graph
+// used by cycle validation. Keeping this operation in the model layer makes
+// all callers use the same cross-rule edge semantics.
+func MergeRuleFontChains(chains map[string][]string) map[string][]string {
+	graph := make(map[string][]string)
+	for _, chain := range chains {
+		for i := 0; i+1 < len(chain); i++ {
+			graph[chain[i]] = append(graph[chain[i]], chain[i+1])
+		}
+	}
+	return graph
 }

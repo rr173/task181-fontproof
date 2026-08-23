@@ -74,6 +74,9 @@ func (s *Service) CreateRule(in model.RuleInput) (*RuleDetail, error) {
 	// 计算 checksum（基于全部规则）
 	ruleFontsAll, _ := s.allRuleFonts()
 	ruleFontsAll[r.ID] = in.FontIDs
+	if err := fallback.CheckCycle(ruleFontsAll); err != nil {
+		return nil, err
+	}
 	r.Checksum = fallback.Checksum(append(rules, r), ruleFontsAll)
 	if err := s.st.CreateRule(r, ruleFonts); err != nil {
 		return nil, err
@@ -245,6 +248,11 @@ func (s *Service) BindRuleFonts(id string, fontIDs []string) (*RuleDetail, error
 			return nil, model.EBadRequest("bound font not found: " + fontID)
 		}
 	}
+	ruleFontsAll, _ := s.allRuleFonts()
+	ruleFontsAll[id] = append([]string(nil), fontIDs...)
+	if err := fallback.CheckCycle(ruleFontsAll); err != nil {
+		return nil, err
+	}
 	var ruleFonts []model.RuleFont
 	for i, fontID := range fontIDs {
 		ruleFonts = append(ruleFonts, model.RuleFont{RuleID: id, FontID: fontID, Rank: i})
@@ -254,7 +262,6 @@ func (s *Service) BindRuleFonts(id string, fontIDs []string) (*RuleDetail, error
 	}
 	// 更新 checksum
 	rules, _ := s.st.ListRules()
-	ruleFontsAll, _ := s.allRuleFonts()
 	ruleFontsAll[id] = fontIDs
 	r.Checksum = fallback.Checksum(rules, ruleFontsAll)
 	r.Version++

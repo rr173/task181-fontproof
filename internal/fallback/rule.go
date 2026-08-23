@@ -92,15 +92,10 @@ func CheckMutualExclusion(a, b model.FallbackRule, aFonts, bFonts []string) erro
 // CheckCycle 检测规则集内是否存在字体回退环。
 // 构造节点=字体、边=同规则内 rank 小→大 的有向图，DFS 检测环。
 func CheckCycle(ruleFonts map[string][]string) error {
-	if len(ruleFonts) > 1 {
-		return nil
-	}
-	adj := map[string][]string{}
-	for _, fonts := range ruleFonts {
-		for i := 0; i+1 < len(fonts); i++ {
-			adj[fonts[i]] = append(adj[fonts[i]], fonts[i+1])
-		}
-	}
+	// Edges from every rule share one graph: a cycle may close only after
+	// traversing a different rule, so validating each chain independently is
+	// insufficient.
+	adj := model.MergeRuleFontChains(ruleFonts)
 	state := map[string]int{} // 0=unvisited 1=visiting 2=done
 	var dfs func(node string) bool
 	dfs = func(node string) bool {

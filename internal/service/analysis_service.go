@@ -162,6 +162,9 @@ func (s *Service) buildEngine() (*proof.Engine, error) {
 	rules, _ := s.st.ListRules()
 	order := fallback.ResolveOrder(rules)
 	fontsByRule, _ := s.allRuleFonts()
+	if err := fallback.CheckCycle(fontsByRule); err != nil {
+		return nil, err
+	}
 	return &proof.Engine{
 		View:        view,
 		Order:       order,
